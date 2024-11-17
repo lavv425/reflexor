@@ -1,0 +1,35 @@
+{
+  "name": "reflexor",
+  "version": "1.0.0",
+  "description": "A lightweight reactive state library with optional persistence.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "reactive",
+    "state-management",
+    "library"
+  ],
+  "author": "Michael Lavigna <michael.lavigna@hotmail.it>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/reflexor.git"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/requirejs": "^2.1.37",
+    "esdoc": "^1.1.0",
+    "esdoc-standard-plugin": "^1.0.0"
+  }
+}

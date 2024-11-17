@@ -1,0 +1,10 @@
+{
+    "source": "./dist",
+    "destination": "./docs",
+    "index": "./dist/README.md",
+    "plugins": [
+        {
+            "name": "esdoc-standard-plugin"
+        }
+    ]
+}
