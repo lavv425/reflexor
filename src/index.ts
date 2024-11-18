@@ -265,7 +265,7 @@
     type Listener = (value: any) => void;
 
     /**
-     * Interface representing a reactive state.
+     * Interface representing a reflex.
      */
     interface ReactiveState {
         /** The current value of the state */
@@ -286,16 +286,17 @@
 
 
     /**
-     * Creates a reactive state.
+     * Creates a reflex.
      * 
      * @param {any} initialValue - The initial value of the state.
-     * @param {boolean} [persisted=false] - Whether the state should be persisted in localStorage.
      * @param {string} [key] - Optional unique key for identifying the state in localStorage.
-     * @returns {Proxy} - A proxy for the reactive state.
+     * if the key is provided, the state will be persisted in localStorage
+     * @returns {Proxy} - A proxy for the reflex.
      */
-    const reflex = (initialValue: any, persisted: boolean = false, key?: string) => {
-        const reactiveKey = key ? md5(`${LOCAL_STORAGE_KEY}-${key}`) : undefined;
-        const savedValue = persisted && reactiveKey ? localStorage.getItem(reactiveKey) : null;
+    const reflex = (initialValue: any, key?: string): ReactiveState => {
+        const persisted = Boolean(key && key.length > 0);
+        const reactiveKey = persisted ? md5(`${LOCAL_STORAGE_KEY}-${key}`) : undefined;
+        const savedValue = reactiveKey ? localStorage.getItem(reactiveKey) : null;
 
         const state: ReactiveState = {
             value: savedValue !== null ? JSON.parse(savedValue) : initialValue,
@@ -307,8 +308,6 @@
             key: reactiveKey,
         };
 
-        reflexStates.set(state, state);
-
         const proxy = new Proxy(state, {
             /**
              * Intercept property updates.
@@ -318,7 +317,7 @@
              * @param {any} value - The new value.
              * @returns {boolean} - Whether the operation was successful.
              */
-            set(target, prop, value) {
+            set(target: ReactiveState, prop: string | symbol, value: any): boolean {
                 if (prop === 'value') {
                     target.value = value;
 
@@ -339,7 +338,7 @@
              * @param {string | symbol} prop - The property being deleted.
              * @returns {boolean} - Whether the operation was successful.
              */
-            deleteProperty(target, prop) {
+            deleteProperty(target: ReactiveState, prop: string | symbol): boolean {
                 if (prop === 'value') {
                     target.dropListeners.forEach((listener) => listener(target.value));
                     delete target.value;
@@ -353,17 +352,18 @@
                 return false;
             },
         });
+        reflexStates.set(proxy, state);
 
         return proxy;
     };
 
     /**
-     * Registers a listener for value changes in reactive states.
+     * Registers a listener for value changes in reflexes.
      * 
      * @param {Listener} funct - The function to be called on value changes.
-     * @param {any[]} deps - Dependencies (reactive states) to listen to.
+     * @param {any[]} deps - Dependencies (reflexes) to listen to.
      */
-    const onReflexChange = (funct: Listener, deps: any[]) => {
+    const onReflexChange = (funct: Listener, deps: any[]): void => {
         deps.forEach((dep) => {
             const state = reflexStates.get(dep);
             if (state) {
@@ -373,12 +373,12 @@
     };
 
     /**
-     * Registers a listener for value removal in reactive states.
+     * Registers a listener for value removal in reflexes.
      * 
      * @param {Listener} funct - The function to be called on value removal.
-     * @param {any[]} deps - Dependencies (reactive states) to listen to.
+     * @param {any[]} deps - Dependencies (reflexes) to listen to.
      */
-    const onReflexDrop = (funct: Listener, deps: any[]) => {
+    const onReflexDrop = (funct: Listener, deps: any[]): void => {
         deps.forEach((dep) => {
             const state = reflexStates.get(dep);
             if (state) {
@@ -388,12 +388,12 @@
     };
 
     /**
-     * Registers a listener for state reset.
+     * Registers a listener for reflexes state reset.
      * 
      * @param {Listener} funct - The function to be called on state reset.
-     * @param {any[]} deps - Dependencies (reactive states) to listen to.
+     * @param {any[]} deps - Dependencies (reflexes) to listen to.
      */
-    const onReflexReset = (funct: Listener, deps: any[]) => {
+    const onReflexReset = (funct: Listener, deps: any[]): void => {
         deps.forEach((dep) => {
             const state = reflexStates.get(dep);
             if (state) {
@@ -407,7 +407,7 @@
      * 
      * @param {any} state - The reactive state to reset.
      */
-    const reset = (state: any) => {
+    const reset = (state: any): void => {
         const reactiveState = reflexStates.get(state);
         if (reactiveState) {
             reactiveState.value = reactiveState.initialValue;

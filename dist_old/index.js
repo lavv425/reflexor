@@ -10,14 +10,14 @@
     }
     else {
         // Global browser (Vanilla JS)
-        globalThis.reactiveStateLib = factory();
+        globalThis.reflexor = factory();
     }
 })(typeof window !== "undefined" ? window : globalThis, function () {
     /**
      * Reactive State Library
      */
-    const LOCAL_STORAGE_KEY = "reactiveStates";
-    const reactiveStates = new Map();
+    const LOCAL_STORAGE_KEY = "reflex";
+    const reflexStates = new Map();
     /**
      * Generates an MD5 hash (standalone function).
      * @param {string} string - The input string.
@@ -222,7 +222,7 @@
      * @param {string} [key] - Optional unique key for identifying the state in localStorage.
      * @returns {Proxy} - A proxy for the reactive state.
      */
-    const reactify = (initialValue, persisted = false, key) => {
+    const reflex = (initialValue, persisted = false, key) => {
         const reactiveKey = key ? md5(`${LOCAL_STORAGE_KEY}-${key}`) : undefined;
         const savedValue = persisted && reactiveKey ? localStorage.getItem(reactiveKey) : null;
         const state = {
@@ -234,7 +234,7 @@
             persisted,
             key: reactiveKey,
         };
-        reactiveStates.set(state, state);
+
         const proxy = new Proxy(state, {
             /**
              * Intercept property updates.
@@ -274,6 +274,8 @@
                 return false;
             },
         });
+        reflexStates.set(proxy, state);
+
         return proxy;
     };
     /**
@@ -282,9 +284,9 @@
      * @param {Listener} funct - The function to be called on value changes.
      * @param {any[]} deps - Dependencies (reactive states) to listen to.
      */
-    const onValueChange = (funct, deps) => {
+    const onReflexChange = (funct, deps) => {
         deps.forEach((dep) => {
-            const state = reactiveStates.get(dep);
+            const state = reflexStates.get(dep);
             if (state) {
                 state.listeners.push(funct);
             }
@@ -296,9 +298,9 @@
      * @param {Listener} funct - The function to be called on value removal.
      * @param {any[]} deps - Dependencies (reactive states) to listen to.
      */
-    const onValueDrop = (funct, deps) => {
+    const onReflexDrop = (funct, deps) => {
         deps.forEach((dep) => {
-            const state = reactiveStates.get(dep);
+            const state = reflexStates.get(dep);
             if (state) {
                 state.dropListeners.push(funct);
             }
@@ -310,9 +312,9 @@
      * @param {Listener} funct - The function to be called on state reset.
      * @param {any[]} deps - Dependencies (reactive states) to listen to.
      */
-    const onValueReset = (funct, deps) => {
+    const onReflexReset = (funct, deps) => {
         deps.forEach((dep) => {
-            const state = reactiveStates.get(dep);
+            const state = reflexStates.get(dep);
             if (state) {
                 state.resetListeners.push(funct);
             }
@@ -324,7 +326,7 @@
      * @param {any} state - The reactive state to reset.
      */
     const reset = (state) => {
-        const reactiveState = reactiveStates.get(state);
+        const reactiveState = reflexStates.get(state);
         if (reactiveState) {
             reactiveState.value = reactiveState.initialValue;
             if (reactiveState.persisted && reactiveState.key) {
@@ -336,11 +338,10 @@
     };
     // functions export
     return {
-        md5,
-        reactify,
-        onValueChange,
-        onValueDrop,
-        onValueReset,
+        reflex,
+        onReflexChange,
+        onReflexDrop,
+        onReflexReset,
         reset,
     };
 });

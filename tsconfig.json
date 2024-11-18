@@ -5,7 +5,7 @@
             "ES2015",
             "DOM"
         ],
-        "module": "commonjs",
+        "module": "ESNext",
         "moduleResolution": "node",
         "esModuleInterop": true,
         "strict": true,
@@ -15,9 +15,10 @@
             "requirejs"
         ],
         "forceConsistentCasingInFileNames": true,
+        "declaration": true,
+        "declarationDir": "./dist",
         "outDir": "./dist",
         "removeComments": false,
-        "declaration": true,
         "sourceMap": true
     },
     "include": [
@@ -26,6 +27,12 @@
     "exclude": [
         "node_modules",
         "old",
-        "dist"
+        "dist",
+        "dist_cjs",
+        "dist_esm",
+        "dist_umd",
+        "dist_cjs_min",
+        "dist_old",
+        "**/*.spec.ts"
     ]
 }
