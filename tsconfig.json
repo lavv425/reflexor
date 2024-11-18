@@ -1,8 +1,9 @@
 {
     "compilerOptions": {
-        "target": "ES2015",
+        "importHelpers": true,
+        "target": "ES2017",
         "lib": [
-            "ES2015",
+            "ES2017",
             "DOM"
         ],
         "module": "ESNext",
@@ -16,23 +17,23 @@
         ],
         "forceConsistentCasingInFileNames": true,
         "declaration": true,
-        "declarationDir": "./dist",
-        "outDir": "./dist",
+        "declarationDir": "old/dist_old_ok",
+        "outDir": "old/dist_old_ok",
         "removeComments": false,
         "sourceMap": true
     },
     "include": [
         "src/**/*"
-    ],
+, "old/index_old_ok.ts"    ],
     "exclude": [
         "node_modules",
         "old",
-        "dist",
+        "old/dist_old_ok",
         "dist_cjs",
         "dist_esm",
         "dist_umd",
         "dist_cjs_min",
-        "dist_old",
+        "old/dist_old",
         "**/*.spec.ts"
     ]
 }

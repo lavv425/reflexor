@@ -282,9 +282,21 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
-    "dist/index.js",
-    "file/dist/index.js.html",
-    "dist/index.js",
+    "dist/cjs/reflexor.min.js",
+    "file/dist/cjs/reflexor.min.js.html",
+    "dist/cjs/reflexor.min.js",
+    "file"
+  ],
+  [
+    "dist/es/reflexor.min.js",
+    "file/dist/es/reflexor.min.js.html",
+    "dist/es/reflexor.min.js",
+    "file"
+  ],
+  [
+    "dist/umd/reflexor.min.js",
+    "file/dist/umd/reflexor.min.js.html",
+    "dist/umd/reflexor.min.js",
     "file"
   ]
 ]

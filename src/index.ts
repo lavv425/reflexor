@@ -13,8 +13,9 @@
     /**
      * Reactive State Library
      */
-    const LOCAL_STORAGE_KEY = "reflex";
+    const STORAGE_KEY = "reflex";
     const reflexStates = new Map<any, ReactiveState>();
+    const isNode = typeof window === "undefined";
 
     /**
      * Generates an MD5 hash (standalone function).
@@ -284,6 +285,88 @@
         key?: string;
     }
 
+    const openIndexedDB = async (dbName = "ReflexorDB", storeName = "reflexStates") => {
+        return new Promise<IDBDatabase>((resolve, reject) => {
+            const request = indexedDB.open(dbName, 1);
+
+            request.onupgradeneeded = (event) => {
+                const db = (event.target as IDBOpenDBRequest).result;
+                if (!db.objectStoreNames.contains(storeName)) {
+                    db.createObjectStore(storeName, { keyPath: "key" });
+                }
+            };
+
+            request.onsuccess = (event) => resolve((event.target as IDBOpenDBRequest).result);
+            request.onerror = (event) => reject((event.target as IDBOpenDBRequest).error);
+        });
+    };
+
+    const saveToIndexedDB = async (key: string, value: any, storeName = "reflexStates") => {
+        const db = await openIndexedDB();
+        return new Promise<void>((resolve, reject) => {
+            const transaction = db.transaction(storeName, "readwrite");
+            const store = transaction.objectStore(storeName);
+            const request = store.put({ key, value });
+
+            request.onsuccess = () => resolve();
+            request.onerror = (event) => reject((event.target as IDBRequest).error);
+        });
+    };
+
+    const getFromIndexedDB = async (key: string, storeName = "reflexStates") => {
+        const db = await openIndexedDB();
+        return new Promise<any>((resolve, reject) => {
+            const transaction = db.transaction(storeName, "readonly");
+            const store = transaction.objectStore(storeName);
+            const request = store.get(key);
+
+            request.onsuccess = (event) => resolve((event.target as IDBRequest).result?.value || null);
+            request.onerror = (event) => reject((event.target as IDBRequest).error);
+        });
+    };
+
+    // Node.js File-based store
+    const fs = isNode ? require("fs") : null;
+    const path = isNode ? require("path") : null;
+    const FILE_PATH = isNode ? path.resolve(__dirname, "reflexor_store.json") : null;
+
+    const ensureFileExists = () => {
+        if (isNode && !fs.existsSync(FILE_PATH)) {
+            fs.writeFileSync(FILE_PATH, JSON.stringify({}));
+        }
+    };
+
+    const saveToFile = (key: string, value: any) => {
+        if (!isNode) return;
+        ensureFileExists();
+        const store = JSON.parse(fs.readFileSync(FILE_PATH, "utf-8"));
+        store[key] = value;
+        fs.writeFileSync(FILE_PATH, JSON.stringify(store, null, 2));
+    };
+
+    const getFromFile = (key: string) => {
+        if (!isNode) return null;
+        ensureFileExists();
+        const store = JSON.parse(fs.readFileSync(FILE_PATH, "utf-8"));
+        return store[key] || null;
+    };
+
+    // Dynamic save/get depending on environment
+    const saveState = async (key: string, value: any) => {
+        if (isNode) {
+            saveToFile(key, value);
+        } else {
+            await saveToIndexedDB(key, value);
+        }
+    };
+
+    const getState = async (key: string) => {
+        if (isNode) {
+            return getFromFile(key);
+        } else {
+            return await getFromIndexedDB(key);
+        }
+    };
 
     /**
      * Creates a reflex.
@@ -295,17 +378,35 @@
      */
     const reflex = (initialValue: any, key?: string): ReactiveState => {
         const persisted = Boolean(key && key.length > 0);
-        const reactiveKey = persisted ? md5(`${LOCAL_STORAGE_KEY}-${key}`) : undefined;
-        const savedValue = reactiveKey ? localStorage.getItem(reactiveKey) : null;
+        const reactiveKey = persisted ? md5(`${STORAGE_KEY}-${key}`) : undefined;
+
+        let stateValue = initialValue;
+
+        if (reactiveKey) {
+            getState(reactiveKey).then((savedValue) => {
+                if (savedValue !== null) {
+                    state.value = savedValue;
+                    state.listeners.forEach((listener) => listener(savedValue));
+                }
+            }).catch((err) => {
+                console.error("Error retrieving persisted value:", err);
+            });
+        }
 
         const state: ReactiveState = {
-            value: savedValue !== null ? JSON.parse(savedValue) : initialValue,
+            value: stateValue,
             initialValue,
             listeners: [],
             dropListeners: [],
             resetListeners: [],
             persisted,
             key: reactiveKey,
+        };
+
+        const saveCurrentState = async () => {
+            if (state.persisted && state.key) {
+                await saveState(state.key, state.value);
+            }
         };
 
         const proxy = new Proxy(state, {
@@ -320,13 +421,8 @@
             set(target: ReactiveState, prop: string | symbol, value: any): boolean {
                 if (prop === 'value') {
                     target.value = value;
-
                     target.listeners.forEach((listener) => listener(value));
-
-                    if (target.persisted && target.key) {
-                        localStorage.setItem(target.key, JSON.stringify(value));
-                    }
-
+                    saveCurrentState();
                     return true;
                 }
                 return false;
@@ -343,8 +439,8 @@
                     target.dropListeners.forEach((listener) => listener(target.value));
                     delete target.value;
 
-                    if (target.persisted && target.key) {
-                        localStorage.removeItem(target.key);
+                    if (state.persisted && state.key) {
+                        saveState(state.key, null);
                     }
 
                     return true;
@@ -413,7 +509,7 @@
             reactiveState.value = reactiveState.initialValue;
 
             if (reactiveState.persisted && reactiveState.key) {
-                localStorage.setItem(reactiveState.key, JSON.stringify(reactiveState.initialValue));
+                saveState(reactiveState.key, reactiveState.initialValue);
             }
 
             reactiveState.listeners.forEach((listener) => listener(reactiveState.initialValue));
