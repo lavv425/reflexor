@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">dist/index.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/lavv425/reflexor" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-reflex">reflex</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">constants</div><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-STORAGE_KEY">STORAGE_KEY</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">utils</div><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-md5">md5</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">dist/index.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">var _a;
+import { STORAGE_KEY } from &quot;./constants&quot;;
+import { md5 } from &quot;./utils&quot;;
+/**
+ * Reflexor Class - A reactive state management library with persistence and batching capabilities.
+ */
+class Reflexor {
+    /**
+     * Opens an IndexedDB connection.
+     * @param {string} dbName - Name of the database.
+     * @param {string} storeName - Name of the object store.
+     * @returns {Promise&lt;IDBDatabase&gt;} A promise that resolves to the database instance.
+     * @private
+     */
+    static async openIndexedDB(dbName = &quot;ReflexorDB&quot;, storeName = &quot;reflexStates&quot;) {
+        return new Promise((resolve, reject) =&gt; {
+            const request = indexedDB.open(dbName, 1);
+            request.onupgradeneeded = (event) =&gt; {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(storeName)) {
+                    db.createObjectStore(storeName, { keyPath: &quot;key&quot; });
+                }
+            };
+            request.onsuccess = (event) =&gt; resolve(event.target.result);
+            request.onerror = (event) =&gt; reject(event.target.error);
+        });
+    }
+    /**
+     * Saves a value to IndexedDB.
+     * @param {string} key - The key for the value.
+     * @param {any} value - The value to save.
+     * @param {string} storeName - The object store name.
+     * @returns {Promise&lt;void&gt;} A promise that resolves when the save is complete.
+     */
+    static async saveToIndexedDB(key, value, storeName = &quot;reflexStates&quot;) {
+        return this.enqueueTransaction(async () =&gt; {
+            const db = await this.openIndexedDB();
+            return new Promise((resolve, reject) =&gt; {
+                const transaction = db.transaction(storeName, &quot;readwrite&quot;);
+                const store = transaction.objectStore(storeName);
+                const request = store.put({ key, value });
+                request.onsuccess = () =&gt; resolve();
+                request.onerror = (event) =&gt; reject(event.target.error);
+            });
+        });
+    }
+    /**
+     * Retrieves a value from IndexedDB.
+     * @param {string} key - Key of the value.
+     * @param {string} storeName - Name of the object store.
+     * @returns {Promise&lt;any&gt;} A promise that resolves to the retrieved value.
+     * @private
+     */
+    static async getFromIndexedDB(key, storeName = &quot;reflexStates&quot;) {
+        const db = await this.openIndexedDB();
+        return new Promise((resolve, reject) =&gt; {
+            const transaction = db.transaction(storeName, &quot;readonly&quot;);
+            const store = transaction.objectStore(storeName);
+            const request = store.get(key);
+            request.onsuccess = (event) =&gt; { var _b; return resolve(((_b = event.target.result) === null || _b === void 0 ? void 0 : _b.value) || null); };
+            request.onerror = (event) =&gt; reject(event.target.error);
+        });
+    }
+    /**
+     * Ensures that the local storage file exists (Node.js only).
+     * @private
+     */
+    static ensureFileExists() {
+        var _b;
+        if (this.isNode &amp;&amp; !((_b = this.fs) === null || _b === void 0 ? void 0 : _b.existsSync(this.FILE_PATH))) {
+            this.fs.writeFileSync(this.FILE_PATH, JSON.stringify({}));
+        }
+    }
+    /**
+     * Saves a value to a file (Node.js only).
+     * @param {string} key - Key of the value.
+     * @param {any} value - Value to save.
+     * @private
+     */
+    static saveToFile(key, value) {
+        if (!this.isNode)
+            return;
+        this.ensureFileExists();
+        const store = JSON.parse(this.fs.readFileSync(this.FILE_PATH, &quot;utf-8&quot;));
+        store[key] = value;
+        this.fs.writeFileSync(this.FILE_PATH, JSON.stringify(store, null, 2));
+    }
+    /**
+    * Retrieves a value from a file (Node.js only).
+    * @param {string} key - Key of the value.
+    * @returns {any} The retrieved value.
+    * @private
+    */
+    static getFromFile(key) {
+        if (!this.isNode)
+            return null;
+        this.ensureFileExists();
+        const store = JSON.parse(this.fs.readFileSync(this.FILE_PATH, &quot;utf-8&quot;));
+        return store[key] || null;
+    }
+    // Dynamic save/get depending on environment
+    /**
+     * Saves a state to the appropriate storage (IndexedDB or file).
+     * @param {string} key - Key of the state.
+     * @param {any} value - Value to save.
+     * @returns {Promise&lt;void&gt;} A promise that resolves when the save operation completes.
+     * @private
+     */
+    static async saveState(key, value) {
+        if (this.isNode) {
+            this.saveToFile(key, value);
+        }
+        else {
+            await this.saveToIndexedDB(key, value);
+        }
+    }
+    /**
+     * Retrieves a state from the appropriate storage (IndexedDB or file).
+     * @param {string} key - Key of the state.
+     * @returns {Promise&lt;any&gt;} A promise that resolves to the retrieved state value.
+     * @private
+     */
+    static async getState(key) {
+        if (this.isNode) {
+            return this.getFromFile(key);
+        }
+        else {
+            return await this.getFromIndexedDB(key);
+        }
+    }
+    /**
+     * Initializes Reflexor by loading all persisted states.
+     * @returns {Promise&lt;void&gt;} A promise that resolves when initialization is complete.
+     */
+    static async initialize() {
+        if (this.initialized)
+            return;
+        const promises = [];
+        this.reflexStates.forEach((state) =&gt; {
+            if (state.persisted &amp;&amp; state.key) {
+                promises.push(this.getState(state.key).then((savedValue) =&gt; {
+                    if (savedValue !== null) {
+                        state.value = savedValue;
+                    }
+                }));
+            }
+        });
+        this.initializationPromise = Promise.all(promises).then(() =&gt; {
+            this.initialized = true;
+        });
+        return this.initializationPromise;
+    }
+    /**
+     * Enables batching of state updates.
+     */
+    static enableBatching() {
+        this.batchingEnabled = true;
+    }
+    /**
+     * Disables batching of state updates.
+     */
+    static disableBatching() {
+        this.batchingEnabled = false;
+    }
+    /**
+     * Flushes all batched updates, applying them to their respective states.
+     */
+    static flushBatches() {
+        this.batchingEnabled = false;
+        this.batchedUpdates.forEach((value, key) =&gt; {
+            const state = this.reflexStates.get(key);
+            if (state) {
+                state.value = value;
+                state.listeners.forEach((listener) =&gt; listener(value));
+            }
+        });
+        this.batchedUpdates.clear();
+    }
+    static setValueWithBatching(state, value) {
+        if (this.batchingEnabled) {
+            this.batchedUpdates.set(state.key, value);
+        }
+        else {
+            state.value = value;
+            state.listeners.forEach((listener) =&gt; listener(value));
+        }
+    }
+    // Transaction Queue
+    /**
+     * Queues a transaction to ensure concurrency safety.
+     * @template T
+     * @param {() =&gt; Promise&lt;T&gt;} transaction - The transaction function to queue.
+     * @returns {Promise&lt;T&gt;} A promise that resolves when the transaction is complete.
+     */
+    static enqueueTransaction(transaction) {
+        this.transactionQueue = this.transactionQueue.then(transaction);
+        return this.transactionQueue;
+    }
+    /**
+     * Sets a custom logger for debugging.
+     * @param {typeof console} customLogger - The custom logger.
+     */
+    static setLogger(customLogger) {
+        this.logger = customLogger;
+    }
+    /**
+     * Logs a message at the specified level.
+     * @param {&quot;info&quot; | &quot;warn&quot; | &quot;error&quot;} level - The log level.
+     * @param {...any[]} args - The message and arguments to log.
+     * @private
+     */
+    static log(level, ...args) {
+        if (this.logger &amp;&amp; typeof this.logger[level] === &quot;function&quot;) {
+            this.logger[level](...args);
+        }
+    }
+    // Main Methods
+    /**
+     * Creates a new reactive state.
+     * @param {any} initialValue - The initial value of the state.
+     * @param {string} [key] - Optional key for persisting the state.
+     * @returns {ReactiveState} A proxy object representing the reactive state.
+     */
+    static reflex(initialValue, key) {
+        const persisted = Boolean(key &amp;&amp; key.length &gt; 0);
+        const reactiveKey = persisted ? md5(`${STORAGE_KEY}-${key}`) : undefined;
+        let stateValue = initialValue;
+        if (reactiveKey) {
+            this.getState(reactiveKey).then((savedValue) =&gt; {
+                if (savedValue !== null) {
+                    state.value = savedValue;
+                    state.listeners.forEach((listener) =&gt; listener(savedValue));
+                }
+            }).catch((err) =&gt; {
+                console.error(&quot;Error retrieving persisted value:&quot;, err);
+            });
+        }
+        const state = {
+            value: stateValue,
+            initialValue,
+            listeners: [],
+            dropListeners: [],
+            resetListeners: [],
+            persisted,
+            key: reactiveKey,
+        };
+        const saveCurrentState = async () =&gt; {
+            if (state.persisted &amp;&amp; state.key) {
+                await this.saveState(state.key, state.value);
+            }
+        };
+        const proxy = new Proxy(state, {
+            set: (target, prop, value) =&gt; {
+                if (prop === &quot;value&quot;) {
+                    target.value = value;
+                    target.listeners.forEach((listener) =&gt; listener(value));
+                    saveCurrentState();
+                    return true;
+                }
+                return false;
+            },
+            deleteProperty: (target, prop) =&gt; {
+                if (prop === &quot;value&quot;) {
+                    target.dropListeners.forEach((listener) =&gt; listener(target.value));
+                    delete target.value;
+                    if (state.persisted &amp;&amp; state.key) {
+                        this.saveState(state.key, null);
+                    }
+                    return true;
+                }
+                return false;
+            },
+        });
+        this.reflexStates.set(proxy, state);
+        return proxy;
+    }
+    /**
+    * Retrieves the current value of a reactive state.
+    * @param {any} state - The reactive state proxy.
+    * @returns {any} The current value of the state.
+    */
+    static getReflexValue(state) {
+        const reactiveState = this.reflexStates.get(state);
+        return reactiveState ? reactiveState.value : undefined;
+    }
+    /**
+     * Checks if a reactive state exists.
+     * @param {any} state - The reactive state proxy.
+     * @returns {boolean} True if the state exists, false otherwise.
+     */
+    static hasReflex(state) {
+        return this.reflexStates.has(state);
+    }
+    /**
+     * Removes a reactive state, including its persisted data if applicable.
+     * @param {any} state - The reactive state proxy.
+     */
+    static removeReflex(state) {
+        const reactiveState = this.reflexStates.get(state);
+        if (reactiveState &amp;&amp; reactiveState.key) {
+            this.saveState(reactiveState.key, null);
+        }
+        this.reflexStates.delete(state);
+    }
+    /**
+     * Retrieves all reactive states.
+     * @returns {Map&lt;any, ReactiveState&gt;} A map of all reactive states.
+     */
+    static getAllReflexes() {
+        return this.reflexStates;
+    }
+    /**
+     * Clears all reactive states, including persisted data if applicable.
+     */
+    static clearAllReflexes() {
+        this.reflexStates.forEach((state, key) =&gt; {
+            if (state.persisted &amp;&amp; state.key) {
+                this.saveState(state.key, null);
+            }
+        });
+        this.reflexStates.clear();
+    }
+    /**
+     * Returns the total count of active reactive states.
+     * @returns {number} The number of reactive states.
+     */
+    static getStateCount() {
+        return this.reflexStates.size;
+    }
+    /**
+     * Adds a middleware function to process state updates.
+     * @param {(state: ReactiveState, value: any) =&gt; any} middleware - The middleware function.
+     */
+    static addMiddleware(middleware) {
+        this.middlewares.push(middleware);
+    }
+    /**
+     * Applies all middleware functions to a state value.
+     * @param {ReactiveState} state - The reactive state.
+     * @param {any} value - The value to process.
+     * @returns {any} The processed value after applying all middleware.
+     * @private
+     */
+    static applyMiddlewares(state, value) {
+        return this.middlewares.reduce((acc, middleware) =&gt; middleware(state, acc), value);
+    }
+    /**
+     * Sets the value of a reactive state after applying middleware.
+     * @param {ReactiveState} state - The reactive state.
+     * @param {any} value - The new value to set.
+     * @private
+     */
+    static setValueWithMiddleware(state, value) {
+        const newValue = this.applyMiddlewares(state, value);
+        state.value = newValue;
+        state.listeners.forEach((listener) =&gt; listener(newValue));
+    }
+    /**
+     * Registers a listener for changes to the value of one or more reactive states.
+     * @param {Listener} listener - The function to be called when a state value changes.
+     * @param {any[]} states - An array of reactive state proxies to listen to.
+     */
+    static onReflexChange(listener, states) {
+        states.forEach((state) =&gt; {
+            const reactiveState = this.reflexStates.get(state);
+            if (reactiveState) {
+                reactiveState.listeners.push(listener);
+            }
+        });
+    }
+    /**
+     * Registers a listener for when one or more reactive states are removed.
+     * @param {Listener} listener - The function to be called when a state is removed.
+     * @param {any[]} states - An array of reactive state proxies to listen to.
+     */
+    static onReflexDrop(listener, states) {
+        states.forEach((state) =&gt; {
+            const reactiveState = this.reflexStates.get(state);
+            if (reactiveState) {
+                reactiveState.dropListeners.push(listener);
+            }
+        });
+    }
+    /**
+     * Registers a listener for when one or more reactive states are reset to their initial values.
+     * @param {Listener} listener - The function to be called when a state is reset.
+     * @param {any[]} states - An array of reactive state proxies to listen to.
+     */
+    static onReflexReset(listener, states) {
+        states.forEach((state) =&gt; {
+            const reactiveState = this.reflexStates.get(state);
+            if (reactiveState) {
+                reactiveState.resetListeners.push(listener);
+            }
+        });
+    }
+    /**
+     * Resets a reactive state to its initial value.
+     * Triggers listeners for both value changes and resets.
+     * @param {any} state - The reactive state proxy to reset.
+     */
+    static reset(state) {
+        const reactiveState = this.reflexStates.get(state);
+        if (reactiveState) {
+            reactiveState.value = reactiveState.initialValue;
+            if (reactiveState.persisted &amp;&amp; reactiveState.key) {
+                this.saveState(reactiveState.key, reactiveState.initialValue);
+            }
+            reactiveState.listeners.forEach((listener) =&gt; listener(reactiveState.initialValue));
+            reactiveState.resetListeners.forEach((listener) =&gt; listener(reactiveState.initialValue));
+        }
+    }
+}
+_a = Reflexor;
+/**
+ * Stores all reactive states.
+ * @private
+ */
+Reflexor.reflexStates = new Map();
+/**
+ * Indicates whether the current environment is Node.js.
+ * @private
+ */
+Reflexor.isNode = typeof window === &quot;undefined&quot;;
+/**
+ * Tracks whether Reflexor has been initialized.
+ * @private
+ */
+Reflexor.initialized = false;
+/**
+ * Stores the initialization promise for async initialization.
+ * @private
+ */
+Reflexor.initializationPromise = null;
+/**
+ * Flag to determine if batching is enabled.
+ * @private
+ */
+Reflexor.batchingEnabled = false;
+/**
+ * Stores batched updates for reactive states.
+ * @private
+ */
+Reflexor.batchedUpdates = new Map();
+/**
+ * Manages a queue for transactions to avoid concurrency issues.
+ * @private
+ */
+Reflexor.transactionQueue = Promise.resolve();
+/**
+ * Logger instance for debugging.
+ * @private
+ */
+Reflexor.logger = console;
+/**
+ * Middleware functions to process updates.
+ * @private
+ */
+Reflexor.middlewares = [];
+// Node.js File-based store
+Reflexor.fs = _a.isNode ? require(&quot;fs&quot;) : null;
+Reflexor.path = _a.isNode ? require(&quot;path&quot;) : null;
+/**
+ * File path used for storing reflex states in Node.js environment.
+ * @private
+ */
+Reflexor.FILE_PATH = _a.isNode ? _a.path.resolve(__dirname, &quot;reflexor_store.json&quot;) : null;
+export const { reflex, onReflexChange, onReflexDrop, onReflexReset, reset, initialize, enableBatching, flushBatches, removeReflex, getReflexValue, hasReflex, getAllReflexes, clearAllReflexes, addMiddleware, disableBatching, getStateCount, setLogger, } = Reflexor;
+//# sourceMappingURL=index.js.map</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.8)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

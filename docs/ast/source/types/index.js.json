@@ -1,0 +1,59 @@
+{
+  "type": "Program",
+  "start": 0,
+  "end": 44,
+  "loc": {
+    "start": {
+      "line": 1,
+      "column": 0
+    },
+    "end": {
+      "line": 2,
+      "column": 33
+    }
+  },
+  "sourceType": "module",
+  "body": [
+    {
+      "type": "ExportNamedDeclaration",
+      "start": 0,
+      "end": 10,
+      "loc": {
+        "start": {
+          "line": 1,
+          "column": 0
+        },
+        "end": {
+          "line": 1,
+          "column": 10
+        }
+      },
+      "declaration": null,
+      "specifiers": [],
+      "source": null,
+      "leadingComments": null,
+      "trailingComments": [
+        {
+          "type": "CommentLine",
+          "value": "# sourceMappingURL=index.js.map",
+          "start": 11,
+          "end": 44,
+          "loc": {
+            "start": {
+              "line": 2,
+              "column": 0
+            },
+            "end": {
+              "line": 2,
+              "column": 33
+            }
+          },
+          "range": [
+            11,
+            44
+          ]
+        }
+      ]
+    }
+  ]
+}

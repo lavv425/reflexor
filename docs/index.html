@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl">
-  <title data-ice="title">Home | reflexor</title>
+  <title data-ice="title">API Document</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
+  
+  
   <script src="script/manual.js"></script>
-<meta name="description" content="A lightweight reactive state library with optional persistence."><meta property="twitter:card" content="summary"><meta property="twitter:title" content="reflexor"><meta property="twitter:description" content="A lightweight reactive state library with optional persistence."></head>
+</head>
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
@@ -17,6 +19,7 @@
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
   
+  <a data-ice="repoURL" href="https://github.com/lavv425/reflexor" class="repo-url-github">Repository</a>
   <div class="search-box">
   <span>
     <img src="./image/search.png">
@@ -24,120 +27,22 @@
   </span>
     <ul class="search-result"></ul>
   </div>
-<a style="position:relative; top:3px;" href="https://github.com/lavv425/reflexor"><img width="20px" src="./image/github.png"></a></header>
+</header>
 
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  </ul>
+  <li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-reflex">reflex</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">constants</div><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-STORAGE_KEY">STORAGE_KEY</a></span></span></li>
+<li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">utils</div><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-md5">md5</a></span></span></li>
+</ul>
 </div>
 </nav>
 
-<div class="content" data-ice="content"><div data-ice="index" class="github-markdown"><h1 id="reflexor-a-reactive-state-library">REFLEXOR a Reactive State Library</h1><p><strong>Reactive State Library</strong> is a lightweight and versatile library for managing reactive states with optional local persistence using <code>localStorage</code>.</p>
-<h2 id="features">Features</h2><ul>
-<li><strong>Multi-environment compatibility</strong>: Works seamlessly with Node.js, browsers, and AMD systems.</li>
-<li><strong>Lightweight</strong>: Ideal for projects requiring simple but powerful state management without the overhead of complex libraries.</li>
-<li><strong>Optional persistence</strong>: Automatically saves states in <code>localStorage</code> with unique keys generated using MD5 hashes.</li>
-<li><strong>Listener support</strong>: Simplifies event management tied to state changes.</li>
-</ul>
-<h2 id="why-choose-reflexor-">Why Choose Reflexor?</h2><ul>
-<li>Suitable for projects of all sizes.</li>
-<li>No external dependencies.</li>
-<li>Perfect for applications requiring reactive state with precise change control.</li>
-<li>Clear and well-documented implementation for developers of all skill levels.</li>
-</ul>
-<h2 id="installation">Installation</h2><p>Add the library to your project by copying the compiled file or including it through a package manager (if published).</p>
-<h2 id="api-documentation">API Documentation</h2><h3 id="-code-reflex-initialvalue--persisted---false--key----code-"><code>reflex(initialValue, persisted = false, key?)</code></h3><p>Creates a reactive state.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>initialValue</code> <em>(any)</em>: The initial value of the state.</li>
-<li><code>persisted</code> <em>(boolean, optional)</em>: Indicates whether the state should be persisted in <code>localStorage</code>.</li>
-<li><code>key</code> <em>(string, optional)</em>: A unique key for identifying the state in <code>localStorage</code>.</li>
-</ul>
-<p><strong>Returns</strong></p>
-<ul>
-<li>A <code>Proxy</code> for the reactive state.</li>
-</ul>
-<hr>
-<h3 id="-code-onreflexchange-callback--deps---code-"><code>onReflexChange(callback, deps)</code></h3><p>Registers a listener for value changes in one or more Reflex states.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>callback</code> <em>(function)</em>: The function to be executed when the value changes. Receives the new value as an argument.</li>
-<li><code>deps</code> <em>(array)</em>: List of reactive states to observe.</li>
-</ul>
-<hr>
-<h3 id="-code-onreflexdrop-callback--deps---code-"><code>onReflexDrop(callback, deps)</code></h3><p>Registers a listener for value removals in one or more Reflex states.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>callback</code> <em>(function)</em>: The function to be executed when the value is removed. Receives the previous value as an argument.</li>
-<li><code>deps</code> <em>(array)</em>: List of reactive states to observe.</li>
-</ul>
-<hr>
-<h3 id="-code-onreflexreset-callback--deps---code-"><code>onReflexReset(callback, deps)</code></h3><p>Registers a listener for resets in one or more Reflex states.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>callback</code> <em>(function)</em>: The function to be executed when the value is reset. Receives the initial value as an argument.</li>
-<li><code>deps</code> <em>(array)</em>: List of reactive states to observe.</li>
-</ul>
-<hr>
-<h3 id="-code-reset-state---code-"><code>reset(state)</code></h3><p>Resets a reactive state to its initial value.</p>
-<p><strong>Parameters</strong></p>
-<ul>
-<li><code>state</code> <em>(any)</em>: The reactive state to reset.</li>
-</ul>
-<h2 id="example-usage">Example Usage</h2><pre><code class="lang-javascript"><code class="source-code prettyprint">// Import the library
-// Import the library
-const { reflex, onReflexChange, onReflexDrop, onReflexReset, reset, md5 } = reflexor;
-
-// Example 1: Create a Reflex
-const counter = reflex(0, true, &quot;app-counter&quot;);
-// Don&apos;t need a key if the state is not persisted
-const name = reflex(&quot;John Doe&quot;);
-
-// Example 2: Attach a listener for value changes
-onReflexChange((newValue) =&gt; {
-  console.log(&quot;The new counter value is:&quot;, newValue);
-}, [counter]);
-
-onReflexChange((newValue) =&gt; {
-  console.log(&quot;The new user name is:&quot;, newValue);
-}, [name]);
-
-// Example 3: Attach a listener for value drops (delete property)
-onReflexDrop((droppedValue) =&gt; {
-  console.log(&quot;The counter value was dropped. Previous value:&quot;, droppedValue);
-}, [counter]);
-
-onReflexDrop((droppedValue) =&gt; {
-  console.log(&quot;The user name was dropped. Previous value:&quot;, droppedValue);
-}, [name]);
-
-// Example 4: Attach a listener for state resets
-onReflexReset((resetValue) =&gt; {
-  console.log(&quot;The counter value was reset to:&quot;, resetValue);
-}, [counter]);
-
-onReflexReset((resetValue) =&gt; {
-  console.log(&quot;The user name was reset to:&quot;, resetValue);
-}, [name]);
-
-// Example 5: Update the reactive state
-counter.value = 42;
-name.value = &quot;Jane Doe&quot;;
-
-// Example 6: Reset the reactive state to its initial value
-reset(counter);
-reset(name);
-
-// Example 7: Drop (delete) the reactive state value
-delete counter.value;
-delete name.value;</code>
-</code></pre>
-</div>
-</div>
+<div class="content" data-ice="content">Please create README.md</div>
 
 <footer class="footer">
-  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.8)</span></a>
 </footer>
 
 <script src="script/search_index.js"></script>

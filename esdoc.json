@@ -3,8 +3,6 @@
     "destination": "./docs",
     "index": "./dist/README.md",
     "plugins": [
-        {
-            "name": "esdoc-standard-plugin"
-        }
+        {"name": "esdoc-es7-plugin"}
     ]
 }

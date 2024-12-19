@@ -1,39 +1,16 @@
 {
     "compilerOptions": {
-        "importHelpers": true,
         "target": "ES2017",
-        "lib": [
-            "ES2017",
-            "DOM"
-        ],
         "module": "ESNext",
-        "moduleResolution": "node",
-        "esModuleInterop": true,
         "strict": true,
-        "skipLibCheck": true,
-        "types": [
-            "node",
-            "requirejs"
-        ],
-        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "sourceMap": true,
         "declaration": true,
-        "declarationDir": "old/dist_old_ok",
-        "outDir": "old/dist_old_ok",
-        "removeComments": false,
-        "sourceMap": true
+        "outDir": "./dist", // Ensure all outputs go to ./dist
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
     },
-    "include": [
-        "src/**/*"
-, "old/index_old_ok.ts"    ],
-    "exclude": [
-        "node_modules",
-        "old",
-        "old/dist_old_ok",
-        "dist_cjs",
-        "dist_esm",
-        "dist_umd",
-        "dist_cjs_min",
-        "old/dist_old",
-        "**/*.spec.ts"
-    ]
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules", "dist"]
 }

@@ -1,0 +1,48 @@
+{
+  "name": "reflexor",
+  "version": "1.3.0",
+  "description": "A lightweight reactive state library with optional persistence.",
+  "main": "dist/cjs/reflexor.min.js",
+  "module": "dist/es/reflexor.min.js",
+  "browser": "dist/umd/reflexor.min.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "keywords": [
+    "reactive",
+    "state-management",
+    "library"
+  ],
+  "author": "Michael Lavigna <michael.lavigna@hotmail.it>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lavv425/reflexor"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "prebuild": "tsc --emitDeclarationOnly --declaration --declarationDir dist/types",
+    "build": "rollup -c",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.1",
+    "@types/node": "^22.9.0",
+    "@types/requirejs": "^2.1.37",
+    "esdoc": "^0.4.8",
+    "esdoc-es7-plugin": "^0.0.3",
+    "esdoc-standard-plugin": "^1.0.0",
+    "rollup": "^3.29.5",
+    "rollup-plugin-dts": "^6.1.1",
+    "tslib": "^2.8.1",
+    "typescript": "^5.6.3"
+  }
+}
